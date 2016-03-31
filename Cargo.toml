@@ -1,0 +1,7 @@
+[package]
+name = "ripple"
+version = "0.1.0"
+authors = ["Robbie Straw <drbawb@fatalsyntax.com>"]
+
+[dependencies]
+rustbox = "*"
