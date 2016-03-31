@@ -77,7 +77,7 @@ fn main() {
                    .ok()
                    .expect("could not open term...");
 
-    twrite(&term, 0, 1, "ripple - input mode");
+    twrite(&term, 0, 1, "welcome to ripple!");
     twrite(&term, 1, 1, "q: quit, ?: help   ");
     term.present();
 
@@ -128,8 +128,8 @@ fn main() {
 
                     Key::Backspace => {
                         tclear(&term, 15, 1, input.len());
-                        let new_length = input.len() - 1;
-                        if new_length >= 0 { input.truncate(new_length); }
+                        if input.len() == 0 { continue } // nothing to truncate...
+                        let new_len = input.len() - 1; input.truncate(new_len);
                     }
 
                     _ => terror(&term, 14, 1, "unhandled keypress"),
