@@ -18,6 +18,8 @@ impl Repl {
         Ok(self.stack.push(try!(buf.parse())))
     }
 
+    pub fn drop(&mut self) { self.stack.pop(); }
+
     pub fn draw(&self, term: &RustBox) {
         let ofs = 3;
         let mut stack = self.stack.iter().rev();
@@ -78,7 +80,7 @@ fn main() {
                    .expect("could not open term...");
 
     twrite(&term, 0, 1, "welcome to ripple!");
-    twrite(&term, 1, 1, "q: quit, ?: help   ");
+    twrite(&term, 1, 1, "q: quit, d: drop  ");
     term.present();
 
     loop {
@@ -90,9 +92,11 @@ fn main() {
         tclear(&term, 14, 1, term.width());
 
         match term.poll_event(false) {
+            // input
             Ok(Event::KeyEvent(keycap)) => {
                 match keycap {
                     Key::Char('q') => break,
+                    Key::Char('d') => repl.drop(),
 
                     Key::Char('+') => match repl.add() {
                         Err(msg) => terror(&term, 14, 1, msg),
@@ -136,13 +140,9 @@ fn main() {
                 }
             }
 
-            Ok(_) => {
-                terror(&term, 14, 1, "unhandled event");
-            }
-
-            Err(e) => {
-                panic!("err: {}", e.description());
-            }
+            // catch-all
+            Ok(_)  => terror(&term, 14, 1, "unhandled event"),
+            Err(e) => panic!("err: {}", e.description()),
         }
     }
 }
