@@ -1,12 +1,18 @@
-extern crate rustbox;
+#[cfg(unix)] extern crate rustbox;
 
+mod platform;
+#[cfg(unix)]    use platform::nix::UnixTerm;
+#[cfg(windows)] use platform::win::WinTerm;
+
+use platform::{Color, Terminal};
+use platform::{Event, Key};
 use std::error::Error;
 
-use rustbox::{Color, RustBox};
-use rustbox::{Event, Key};
+//use rustbox::{Color, RustBox};
+//use rustbox::{Event, Key};
 
 struct Repl {
-    stack: Vec<f64>, // todo: deque?
+    stack: Vec<f64>,
 }
 
 impl Repl {
@@ -20,7 +26,7 @@ impl Repl {
 
     pub fn drop(&mut self) { self.stack.pop(); }
 
-    pub fn draw(&self, term: &RustBox) {
+    pub fn draw(&self, term: &mut Terminal) {
         let ofs = 3;
         let mut stack = self.stack.iter().rev();
         for i in 0..10 {
@@ -31,7 +37,7 @@ impl Repl {
             };
 
             let output = format!("{:02}: {}", i+1, data);
-            tclear(term, (ofs + idx), 1, term.width());
+            tclear(term, (ofs + idx), 1, 0);
             twrite(term, (ofs + idx), 1, &output[..]);
         }
     }
@@ -69,52 +75,49 @@ impl Repl {
     }
 }
 
-
-
 fn main() {
     let mut repl = Repl::new();
     let mut input = format!("");
 
-    let term = RustBox::init(Default::default())
-                   .ok()
-                   .expect("could not open term...");
+    // TODO: platform specific
+    let mut term = UnixTerm::new();
 
-    twrite(&term, 0, 1, "welcome to ripple!");
-    twrite(&term, 1, 1, "q: quit, d: drop  ");
-    term.present();
+    twrite(&mut term, 0, 1, "welcome to ripple!");
+    twrite(&mut term, 1, 1, "q: quit, d: drop  ");
+    term.render();
 
     loop {
-        repl.draw(&term);
-        tinput(&term, 15, 1, &input[..]);
-        term.present();
+        repl.draw(&mut term);
+        tinput(&mut term, 15, 1, &input[..]);
+        term.render();
 
         // clear buffers
-        tclear(&term, 14, 1, term.width());
+        tclear(&mut term, 14, 1, 0);
 
-        match term.poll_event(false) {
+        match term.poll_event() {
             // input
-            Ok(Event::KeyEvent(keycap)) => {
+            Ok(Event::KeyPress(keycap)) => {
                 match keycap {
                     Key::Char('q') => break,
                     Key::Char('d') => repl.drop(),
 
                     Key::Char('+') => match repl.add() {
-                        Err(msg) => terror(&term, 14, 1, msg),
+                        Err(msg) => terror(&mut term, 14, 1, msg),
                         _ => {}
                     },
 
                     Key::Char('-') =>match repl.sub() {
-                        Err(msg) => terror(&term, 14, 1, msg),
+                        Err(msg) => terror(&mut term, 14, 1, msg),
                         _ => {}
                     },
 
                     Key::Char('*') => match repl.mul() {
-                        Err(msg) => terror(&term, 14, 1, msg),
+                        Err(msg) => terror(&mut term, 14, 1, msg),
                         _ => {}
                     },
 
                     Key::Char('/') => match repl.div() {
-                        Err(msg) => terror(&term, 14, 1, msg),
+                        Err(msg) => terror(&mut term, 14, 1, msg),
                         _ => {}
                     },
 
@@ -122,27 +125,27 @@ fn main() {
 
                     Key::Enter => {
                         match repl.consume(&input[..]) {
-                            Err(e) => terror(&term, 14, 1, e.description()),
+                            Err(e) => terror(&mut term, 14, 1, e.description()),
                             _ => {}
                         };
 
-                        tclear(&term, 15, 1, input.len());
+                        tclear(&mut term, 15, 1, input.len());
                         input.clear();
                     }
 
                     Key::Backspace => {
-                        tclear(&term, 15, 1, input.len());
+                        tclear(&mut term, 15, 1, input.len());
                         if input.len() == 0 { continue } // nothing to truncate...
                         let new_len = input.len() - 1; input.truncate(new_len);
                     }
 
-                    _ => terror(&term, 14, 1, "unhandled keypress"),
+                    _ => terror(&mut term, 14, 1, "unhandled keypress"),
                 }
             }
 
             // catch-all
-            Ok(_)  => terror(&term, 14, 1, "unhandled event"),
-            Err(e) => panic!("err: {}", e.description()),
+            //Ok(_)  => terror(&term, 14, 1, "unhandled event"),
+            Err(msg) => panic!("err: {}", msg),
         }
     }
 }
@@ -155,25 +158,25 @@ fn is_numeric(input: char) -> bool {
     }
 }
 
-fn twrite(term: &RustBox, row: usize, col: usize, text: &str) {
-    term.print(col, row, rustbox::RB_BOLD, Color::White, Color::Black, text);
+fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::White);
+    term.write_ln(text);
 }
 
-fn terror(term: &RustBox, row: usize, col: usize, text: &str) {
-    term.print(col, row, rustbox::RB_BOLD, Color::Red, Color::Black, text);
+fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::Red);
+    term.write_ln(text);
 }
 
-fn tinput(term: &RustBox, row: usize, col: usize, text: &str) {
-    term.print(col, row, rustbox::RB_BOLD, Color::White, Color::Black, text);
+fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::Green);
+    term.write_ln(text);
 }
 
-fn tclear(term: &RustBox, row: usize, col: usize, len: usize) {
-    for i in 0..len {
-        term.print(col + i,
-                   row,
-                   rustbox::RB_BOLD,
-                   Color::Default,
-                   Color::Default,
-                   " ");
-    }
+fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
+    term.move_cursor(row, col);
+    term.clear_ln();
 }
