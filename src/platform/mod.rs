@@ -1,4 +1,5 @@
-pub mod nix;
+#[cfg(unix)]    pub mod nix;
+#[cfg(windows)] pub mod win;
 
 #[allow(dead_code)]
 pub enum Color {

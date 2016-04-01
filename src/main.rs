@@ -8,9 +8,6 @@ use platform::{Color, Terminal};
 use platform::{Event, Key};
 use std::error::Error;
 
-//use rustbox::{Color, RustBox};
-//use rustbox::{Event, Key};
-
 struct Repl {
     stack: Vec<f64>,
 }
@@ -75,12 +72,15 @@ impl Repl {
     }
 }
 
+#[cfg(unix)]    fn init_term() -> UnixTerm { UnixTerm::new() }
+#[cfg(windows)] fn init_term() -> WinConsole { WinConsole::new() }
+
 fn main() {
     let mut repl = Repl::new();
     let mut input = format!("");
 
     // TODO: platform specific
-    let mut term = UnixTerm::new();
+    let mut term = init_term();
 
     twrite(&mut term, 0, 1, "welcome to ripple!");
     twrite(&mut term, 1, 1, "q: quit, d: drop  ");

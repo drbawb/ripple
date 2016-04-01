@@ -3,6 +3,10 @@ use super::Event;
 
 struct WinConsole;
 
+impl WinConsole {
+    pub fn new() -> WinConsole { WinConsole }
+}
+
 impl Terminal for WinConsole {
     fn width(&self)  -> usize { 0 }
     fn height(&self) -> usize { 0 }
