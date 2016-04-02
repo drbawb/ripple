@@ -15,10 +15,12 @@ pub enum Color {
 }
 
 // TODO: hold, release, repeat (winapi?)
+#[derive(Clone,Copy)]
 pub enum Event {
     KeyPress(Key),
 }
 
+#[derive(Clone,Copy)]
 pub enum Key {
     Char(char),
     Enter,
@@ -39,25 +41,25 @@ pub trait Terminal {
     fn poll_event(&mut self) -> Result<Event, String>;
 }
 
-fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::White);
     term.write_ln(text);
 }
 
-fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::Red);
     term.write_ln(text);
 }
 
-fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::Green);
     term.write_ln(text);
 }
 
-fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
+pub fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
     term.move_cursor(row, col);
     term.clear_ln();
 }
