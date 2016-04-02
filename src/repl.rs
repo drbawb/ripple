@@ -55,6 +55,12 @@ impl Repl {
         (x, y)
     }
 
+    pub fn negate(&mut self) -> Result<(), &'static str> {
+        if self.stack.len() < 1 { return Err("need one operand"); }
+        let x = self.stack.pop().unwrap();
+        Ok(self.stack.push(-x))
+    }
+
     pub fn add(&mut self) -> Result<(), &'static str> {
         if self.stack.len() < 2 { return Err("need two operands"); }
         let (x, y) = self.grab_two();

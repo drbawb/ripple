@@ -47,6 +47,11 @@ fn main() {
                     Key::Char('q') => break,
                     Key::Char('d') => repl.drop(),
 
+                    Key::Char('n') => match repl.negate() {
+                        Err(msg) => terror(&mut term, 14, 1, msg),
+                        _ => {},
+                    },
+
                     Key::Char('+') => match repl.add() {
                         Err(msg) => terror(&mut term, 14, 1, msg),
                         _ => {}
