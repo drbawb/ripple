@@ -38,3 +38,26 @@ pub trait Terminal {
 
     fn poll_event(&self) -> Result<Event, String>;
 }
+
+fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::White);
+    term.write_ln(text);
+}
+
+fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::Red);
+    term.write_ln(text);
+}
+
+fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
+    term.move_cursor(row, col);
+    term.color_cursor(Color::Black, Color::Green);
+    term.write_ln(text);
+}
+
+fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
+    term.move_cursor(row, col);
+    term.clear_ln();
+}

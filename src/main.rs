@@ -1,15 +1,21 @@
 #[cfg(unix)] extern crate rustbox;
+#[cfg(windows)] extern crate wio;
+#[cfg(windows)] extern crate winapi;
 
 mod platform;
 mod repl;
 
 #[cfg(unix)]    use platform::nix::UnixTerm;
-#[cfg(windows)] use platform::win::WinTerm;
+#[cfg(windows)] use platform::win::WinConsole;
 
 use platform::{Color, Terminal};
 use platform::{Event, Key};
+use platform::{terror, twrite, tinput, tclear}; // TODO: shit fuck i'm high
+
 use repl::Repl;
 use std::error::Error;
+use std::thread;
+use std::time::Duration;
 
 #[cfg(unix)]    fn init_term() -> UnixTerm { UnixTerm::new() }
 #[cfg(windows)] fn init_term() -> WinConsole { WinConsole::new() }
@@ -21,6 +27,7 @@ fn main() {
     // TODO: platform specific
     let mut term = init_term();
 
+    term.clear_fb();
     twrite(&mut term, 0, 1, "welcome to ripple!");
     twrite(&mut term, 1, 1, "q: quit, d: drop  ");
     term.render();
@@ -84,7 +91,7 @@ fn main() {
 
             // catch-all
             //Ok(_)  => terror(&term, 14, 1, "unhandled event"),
-            Err(msg) => panic!("err: {}", msg),
+            Err(msg) => {},
         }
     }
 }
@@ -95,27 +102,4 @@ fn is_numeric(input: char) -> bool {
         '.' => true, // TODO: not technically true, can only have one ?
         _ => false,
     }
-}
-
-fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
-    term.move_cursor(row, col);
-    term.color_cursor(Color::Black, Color::White);
-    term.write_ln(text);
-}
-
-fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
-    term.move_cursor(row, col);
-    term.color_cursor(Color::Black, Color::Red);
-    term.write_ln(text);
-}
-
-fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
-    term.move_cursor(row, col);
-    term.color_cursor(Color::Black, Color::Green);
-    term.write_ln(text);
-}
-
-fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
-    term.move_cursor(row, col);
-    term.clear_ln();
 }
