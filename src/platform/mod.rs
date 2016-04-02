@@ -36,7 +36,7 @@ pub trait Terminal {
     fn write_ln(&self, text: &str);
     fn clear_ln(&self);
 
-    fn poll_event(&self) -> Result<Event, String>;
+    fn poll_event(&mut self) -> Result<Event, String>;
 }
 
 fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
