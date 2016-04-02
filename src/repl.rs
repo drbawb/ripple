@@ -1,5 +1,5 @@
 use std::error::Error;
-use platform::Terminal;
+use platform::{self, Terminal};
 
 pub struct Repl {
     stack: Vec<f64>,
@@ -27,8 +27,8 @@ impl Repl {
             };
 
             let output = format!("{:02}: {}", i+1, data);
-            tclear(term, (ofs + idx), 1, 0);
-            twrite(term, (ofs + idx), 1, &output[..]);
+            platform::tclear(term, (ofs + idx), 1, 0);
+            platform::twrite(term, (ofs + idx), 1, &output[..]);
         }
     }
 
