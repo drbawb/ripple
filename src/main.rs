@@ -29,7 +29,7 @@ fn main() {
 
     term.clear_fb();
     twrite(&mut term, 0, 1, "welcome to ripple!");
-    twrite(&mut term, 1, 1, "q: quit, d: drop  ");
+    twrite(&mut term, 1, 1, "q: quit, d: drop, n: negate");
     term.render();
 
     loop {
@@ -37,15 +37,19 @@ fn main() {
         tinput(&mut term, 15, 1, &input[..]);
         term.render();
 
-        // clear buffers
-        tclear(&mut term, 14, 1, 0);
-
         match term.poll_event() {
             // input
             Ok(Event::KeyPress(keycap)) => {
+                // clear the error buffer once we have more input
+                tclear(&mut term, 14, 1, 0);
+
                 match keycap {
                     Key::Char('q') => break,
-                    Key::Char('d') => repl.drop(),
+
+                    Key::Char('d') => match repl.drop() {
+                        Err(msg) => terror(&mut term, 14, 1, msg),
+                        _ => {},
+                    },
 
                     Key::Char('n') => match repl.negate() {
                         Err(msg) => terror(&mut term, 14, 1, msg),

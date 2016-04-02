@@ -14,8 +14,6 @@ impl Repl {
         Ok(self.stack.push(try!(buf.parse())))
     }
 
-    pub fn drop(&mut self) { self.stack.pop(); }
-
     pub fn draw(&self, term: &mut Terminal) {
         let mut stack = self.stack.iter().rev();
         for i in 0..10 {
@@ -53,6 +51,11 @@ impl Repl {
         let y = self.stack.pop().unwrap();
         let x = self.stack.pop().unwrap();
         (x, y)
+    }
+
+    pub fn drop(&mut self) -> Result<(), &'static str> { 
+        if self.stack.len() < 1 { return Err("need one operand"); }
+        self.stack.pop(); Ok(())
     }
 
     pub fn negate(&mut self) -> Result<(), &'static str> {
