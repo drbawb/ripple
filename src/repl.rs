@@ -17,19 +17,34 @@ impl Repl {
     pub fn drop(&mut self) { self.stack.pop(); }
 
     pub fn draw(&self, term: &mut Terminal) {
-        let ofs = 3;
         let mut stack = self.stack.iter().rev();
         for i in 0..10 {
             let idx = 9 - i;
-            let data = match stack.next() {
-                Some(reg) => format!("{}", reg),
-                None => "".to_string(),
-            };
+            let ofs = 3;
 
-            let output = format!("{:02}: {}", i+1, data);
-            platform::tclear(term, (ofs + idx), 1, 0);
-            platform::twrite(term, (ofs + idx), 1, &output[..]);
+            let prompt = format!("{:02}: ", i+1);
+            let prompt_width = prompt.len();
+            term.move_cursor((ofs + idx), 0);
+            term.clear_ln();
+            term.write_ln(&prompt[..]);
+
+            if let Some(reg) = stack.next() {
+                let output   = format!("{}", reg);
+                let alt_text = self.alt_repr(*reg);
+
+                term.move_cursor((ofs + idx), prompt_width);
+                term.write_ln(&output[..]);
+
+                term.move_cursor((ofs + idx), prompt_width + 30);
+                term.write_ln(&alt_text[..]);
+            }
         }
+    }
+
+    // offset x = 20, draw numbers in different modes, e.g binary, hex, etc.
+    fn alt_repr(&self, value: f64) -> String {
+        let reg = value.floor() as i64;
+        format!("0x{:016x} | 0b{:08b}", reg, reg)
     }
 
     // basic ops
