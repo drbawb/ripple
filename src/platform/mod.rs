@@ -34,6 +34,7 @@ pub trait Terminal {
     fn move_cursor(&mut self, row: usize, col: usize);
     fn color_cursor(&mut self, bg: Color, fg: Color);
     fn render(&self);
+    fn clear_fb(&mut self);
 
     fn write_ln(&self, text: &str);
     fn clear_ln(&self);

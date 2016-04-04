@@ -40,6 +40,8 @@ impl Terminal for UnixTerm {
         self.terminal.present()
     }
 
+    fn clear_fb(&mut self) {} // nop on unix?
+
     fn move_cursor(&mut self, row: usize, col: usize) {
         self.cursor_x = col;
         self.cursor_y = row;

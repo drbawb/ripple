@@ -90,8 +90,12 @@ impl WinConsole {
             }
         }
     }
+}
 
-    pub fn clear_fb(&mut self) {
+impl Terminal for WinConsole {
+    fn render(&self) {} // nop on windows
+    
+    fn clear_fb(&mut self) {
         // TWSS: "[and I'm self so] ... I can just manipulate myself."
         let rect = WinConsole::rect_from(self.stdout.info().unwrap());
         let num_lines = rect.bottom - rect.top;
@@ -104,10 +108,7 @@ impl WinConsole {
             self.clear_ln()
         }
     }
-}
 
-impl Terminal for WinConsole {
-    fn render(&self) {} // nop on windows
     fn width(&self)  -> usize { 0 }
     fn height(&self) -> usize { 0 }
 
