@@ -77,7 +77,7 @@ impl Terminal for UnixTerm {
     }
 
     fn poll_event(&mut self) -> Result<Event, String> {
-        match self.terminal.poll_event(false) { // TODO: the fuck does `false` mean?
+        match self.terminal.poll_event(false) {
             Ok(RBEvent::KeyEvent(keycap)) => match keycap {
                 RBKey::Char(scalar) => Ok(Event::KeyPress(Key::Char(scalar))),
                 RBKey::Enter        => Ok(Event::KeyPress(Key::Enter)),

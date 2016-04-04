@@ -8,7 +8,7 @@ mod repl;
 use std::error::Error;
 
 use platform::{Terminal, Event, Key};
-use platform::{terror, twrite, tinput, tclear}; // TODO: shit fuck i'm high
+use platform::{terror, twrite, tinput, tclear};
 use repl::Repl;
 
 #[cfg(unix)] use platform::nix::UnixTerm;
@@ -18,11 +18,9 @@ use repl::Repl;
 #[cfg(windows)] fn init_term() -> WinConsole { WinConsole::new() }
 
 fn main() {
-    let mut repl = Repl::new();
+    let mut repl  = Repl::new();
     let mut input = format!("");
-
-    // TODO: platform specific
-    let mut term = init_term();
+    let mut term  = init_term();
 
     term.clear_fb();
     twrite(&mut term, 0, 1, "welcome to ripple!");
@@ -102,10 +100,17 @@ fn main() {
     }
 }
 
+// TODO: better input handling, more input modes
+// e.g: infix, lisp-y prefix or postfix, scientific notation, etc.
+// e.g: only permit one decimal point
+// e.g: make sure input register is always a valid number b/c some day
+//      input register might just be another part of the stack 
+//      (like old HP calculators.)
+//
 fn is_numeric(input: char) -> bool {
     match input {
         '0'...'9' => true,
-        '.' => true, // TODO: not technically true, can only have one ?
+        '.' => true,
         _ => false,
     }
 }
