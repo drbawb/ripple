@@ -1,11 +1,9 @@
 use platform::Terminal;
 use platform::{Color, Event, Key};
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::mem;
 use std::os::windows::ffi::OsStrExt;
-use std::thread;
-use std::time::Duration;
 
 use wio;
 use wio::console::{CharInfo, Input, ScreenBuffer};
