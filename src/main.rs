@@ -38,7 +38,7 @@ fn main() {
             // input
             Ok(Event::KeyPress(keycap)) => {
                 // clear the error buffer once we have more input
-                tclear(&mut term, 14, 1, 0);
+                tclear(&mut term, 14, 1);
 
                 match keycap {
                     Key::Char('q') => break,
@@ -81,12 +81,12 @@ fn main() {
                             _ => {}
                         };
 
-                        tclear(&mut term, 15, 1, input.len());
+                        tclear(&mut term, 15, 1);
                         input.clear();
                     }
 
                     Key::Backspace => {
-                        tclear(&mut term, 15, 1, input.len());
+                        tclear(&mut term, 15, 1);
                         if input.len() == 0 { continue } // nothing to truncate...
                         let new_len = input.len() - 1; input.truncate(new_len);
                     }
@@ -97,7 +97,7 @@ fn main() {
 
             // catch-all
             //Ok(_)  => terror(&term, 14, 1, "unhandled event"),
-            Err(msg) => {},
+            Err(_message) => {},
         }
     }
 }

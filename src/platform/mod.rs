@@ -42,25 +42,25 @@ pub trait Terminal {
     fn poll_event(&mut self) -> Result<Event, String>;
 }
 
-pub fn twrite(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn twrite<T: Terminal>(term: &mut T, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::White);
     term.write_ln(text);
 }
 
-pub fn terror(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn terror<T: Terminal>(term: &mut T, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::Red);
     term.write_ln(text);
 }
 
-pub fn tinput(term: &mut Terminal, row: usize, col: usize, text: &str) {
+pub fn tinput<T: Terminal>(term: &mut T, row: usize, col: usize, text: &str) {
     term.move_cursor(row, col);
     term.color_cursor(Color::Black, Color::Green);
     term.write_ln(text);
 }
 
-pub fn tclear(term: &mut Terminal, row: usize, col: usize, len: usize) {
+pub fn tclear<T: Terminal>(term: &mut T, row: usize, col: usize) {
     term.move_cursor(row, col);
     term.clear_ln();
 }
