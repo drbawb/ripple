@@ -7,21 +7,10 @@ use std::os::windows::ffi::OsStrExt;
 use std::thread;
 use std::time::Duration;
 
-
 use wio;
 use wio::console::{CharInfo, Input, ScreenBuffer};
 use winapi::wincon as con;
 use winapi::winuser::{VK_BACK, VK_RETURN};
-
-// TODO: assert ascii only
-fn w32chars(buf: &str) -> Vec<CharInfo> {
-    let fg = 0x0004;
-    let bg = 0x0000;
-    let attr = (fg | bg) | 0x0008;
-    OsStr::new(buf).encode_wide()
-        .map(|wchar| { CharInfo::new(wchar, attr) })
-        .collect()
-}
 
 struct Rect {
     pub top:    i16,
@@ -75,6 +64,16 @@ impl WinConsole {
         }
     }
 
+    // applies windows encoding wizardry to `text`
+    fn encode_charinfo(&self, text: &str) -> Vec<CharInfo> {
+        let fg_color = convert_color(self.fg_color);
+        let bg_color = convert_color(self.bg_color) << 4;
+        
+        buf.encode_wide()
+           .map(|wchar| { CharInfo::new(wchar, fg_color | bg_color) })
+           .collect()
+    }
+
     // figure out console buffer position
     // HACK: unwrapping the newtype to get at the real winapi bits...
     fn rect_from(info: wio::console::Info) -> Rect {
@@ -109,27 +108,37 @@ impl Terminal for WinConsole {
         }
     }
 
-    fn width(&self)  -> usize { 0 }
-    fn height(&self) -> usize { 0 }
+    fn width(&self)  -> usize { 
+         let rect = WinConsole::rect_from(self.stdout.info().unwrap());
+         rect.right - rect.left
+    }
+
+    fn height(&self) -> usize { 
+        let rect = WinConsole::rect_from(self.stdout.info().unwrap());
+        rect.bottom - rect.top
+    }
 
     fn move_cursor(&mut self, row: usize, col: usize) {
         self.cursor_x = col;
         self.cursor_y = row;
     }
 
-    fn color_cursor(&mut self, bg: Color, fg: Color) { } // todo: fuck...
+    fn color_cursor(&mut self, bg: Color, fg: Color) { 
+        self.bg_color = bg;
+        self.fg_color = fg;
+    }
 
     fn write_ln(&self, text: &str) { 
         let rect = WinConsole::rect_from(self.stdout.info().unwrap());
-        let line = w32chars(text);
+        let line = self.encode_charinfo(text);
+        let msg_len = line.len() as i16;
+        if msg_len == 0 { return; } // TODO: shit fuck hacky as all get out
 
-        let msg_len  = line.len() as i16;
         let (win_origin_x, win_origin_y) = (
             rect.left + self.cursor_x as i16,
             rect.top + self.cursor_y as i16,
         );
 
-        if msg_len == 0 { return; } // TODO: shit fuck hacky as all get out
         self.stdout.write_output(
             &line[..],
             (msg_len, 1),
@@ -145,13 +154,8 @@ impl Terminal for WinConsole {
         let mut buf = OsString::new();
         for _ in rect.left..rect.right { buf.push(" "); }
        
-        // convert to default-styled windows wchars
-        let line: Vec<CharInfo> = buf
-            .encode_wide()
-            .map(|wchar| { CharInfo::new(wchar, 0) })
-            .collect();
-
         // write line
+        let line = self.encode_charinfo(buf);
         self.stdout.write_output(
             &line[..],
             (line.len() as i16, 1),
@@ -194,6 +198,21 @@ impl Terminal for WinConsole {
         }
     }
 
+}
+
+// convert platform color to win32 attribute code
+fn convert_color(color: Color) -> usize {
+    match color {
+        Default => 0x0000,
+        Black   => 0x0000,
+        Red     => 0x0004,
+        Green   => 0x0002,
+        Blue    => 0x0001,
+        Yellow  => 0x0004 | 0x0002 | 0x0008,
+        Magenta => 0x0004 | 0x0001 | 0x0008,
+        Cyan    => 0x0001 | 0x0008,
+        White   => 0x0004 | 0x0002 | 0x0001,
+    }
 }
 
 fn meta_key(event: con::KEY_EVENT_RECORD) -> bool {
