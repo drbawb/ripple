@@ -1,5 +1,5 @@
 use std::error::Error;
-use platform::{self, Color, Terminal};
+use platform::{Color, Terminal};
 
 pub struct Repl {
     stack: Vec<f64>,
@@ -16,7 +16,6 @@ impl Repl {
 
     pub fn draw(&self, term: &mut Terminal) {
         term.color_cursor(Color::Black, Color::White);
-
 
         let mut stack = self.stack.iter().rev();
         for i in 0..10 {

@@ -5,19 +5,16 @@
 mod platform;
 mod repl;
 
-#[cfg(unix)]    use platform::nix::UnixTerm;
-#[cfg(windows)] use platform::win::WinConsole;
-
-use platform::{Color, Terminal};
-use platform::{Event, Key};
-use platform::{terror, twrite, tinput, tclear}; // TODO: shit fuck i'm high
-
-use repl::Repl;
 use std::error::Error;
-use std::thread;
-use std::time::Duration;
 
-#[cfg(unix)]    fn init_term() -> UnixTerm { UnixTerm::new() }
+use platform::{Terminal, Event, Key};
+use platform::{terror, twrite, tinput, tclear}; // TODO: shit fuck i'm high
+use repl::Repl;
+
+#[cfg(unix)] use platform::nix::UnixTerm;
+#[cfg(unix)] fn init_term() -> UnixTerm { UnixTerm::new() }
+
+#[cfg(windows)] use platform::win::WinConsole;
 #[cfg(windows)] fn init_term() -> WinConsole { WinConsole::new() }
 
 fn main() {
