@@ -4,14 +4,11 @@ version = "0.1.0"
 authors = ["Robbie Straw <drbawb@fatalsyntax.com>"]
 
 [dependencies]
-kernel32-sys = "*"
-winapi = "*"
-wio = "*"
 
-[target."cfg(unix)".dependencies]
+[target.'cfg(unix)'.dependencies]
 rustbox = "*"
 
-[target."cfg(windows)".dependencies]
+[target.'cfg(windows)'.dependencies]
 kernel32-sys = "*"
 winapi = "*"
 wio = "*"
