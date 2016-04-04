@@ -69,9 +69,10 @@ impl WinConsole {
         let fg_color = convert_color(self.fg_color);
         let bg_color = convert_color(self.bg_color) << 4;
         
-        buf.encode_wide()
-           .map(|wchar| { CharInfo::new(wchar, fg_color | bg_color) })
-           .collect()
+        OsStr::new(text)
+            .encode_wide()
+            .map(|wchar| { CharInfo::new(wchar, fg_color | bg_color) })
+            .collect()
     }
 
     // figure out console buffer position
@@ -110,12 +111,12 @@ impl Terminal for WinConsole {
 
     fn width(&self)  -> usize { 
          let rect = WinConsole::rect_from(self.stdout.info().unwrap());
-         rect.right - rect.left
+         (rect.right - rect.left) as usize
     }
 
     fn height(&self) -> usize { 
         let rect = WinConsole::rect_from(self.stdout.info().unwrap());
-        rect.bottom - rect.top
+        (rect.bottom - rect.top) as usize
     }
 
     fn move_cursor(&mut self, row: usize, col: usize) {
@@ -151,11 +152,11 @@ impl Terminal for WinConsole {
 
         // build line of spaces that is as wide as the conbuf
         // TODO: format! w/ padding?
-        let mut buf = OsString::new();
-        for _ in rect.left..rect.right { buf.push(" "); }
+        let mut buf = String::new();
+        for _ in rect.left..rect.right { buf.push(' '); }
        
         // write line
-        let line = self.encode_charinfo(buf);
+        let line = self.encode_charinfo(&buf[..]);
         self.stdout.write_output(
             &line[..],
             (line.len() as i16, 1),
@@ -201,17 +202,17 @@ impl Terminal for WinConsole {
 }
 
 // convert platform color to win32 attribute code
-fn convert_color(color: Color) -> usize {
+fn convert_color(color: Color) -> u16 {
     match color {
-        Default => 0x0000,
-        Black   => 0x0000,
-        Red     => 0x0004,
-        Green   => 0x0002,
-        Blue    => 0x0001,
-        Yellow  => 0x0004 | 0x0002 | 0x0008,
-        Magenta => 0x0004 | 0x0001 | 0x0008,
-        Cyan    => 0x0001 | 0x0008,
-        White   => 0x0004 | 0x0002 | 0x0001,
+        Color::Default => 0x0000,
+        Color::Black   => 0x0000,
+        Color::Red     => 0x0004,
+        Color::Green   => 0x0002,
+        Color::Blue    => 0x0001,
+        Color::Yellow  => 0x0004 | 0x0002 | 0x0008,
+        Color::Magenta => 0x0004 | 0x0001 | 0x0008,
+        Color::Cyan    => 0x0001 | 0x0008,
+        Color::White   => 0x0004 | 0x0002 | 0x0001,
     }
 }
 

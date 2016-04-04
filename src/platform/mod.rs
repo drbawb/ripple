@@ -2,6 +2,7 @@
 #[cfg(windows)] pub mod win;
 
 #[allow(dead_code)]
+#[derive(Clone,Copy)]
 pub enum Color {
     Default,
     Black,
