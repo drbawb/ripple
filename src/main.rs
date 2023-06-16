@@ -4,7 +4,6 @@ extern crate crossterm;
 mod platform;
 mod repl;
 
-use std::error::Error;
 use std::io::{stdout, Write};
 use std::time::Duration;
 
@@ -29,7 +28,7 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         tinput(15, 1, &input[..])?;
-        repl.draw();
+        repl.draw()?;
         // term.render();
         //
         //
@@ -81,7 +80,7 @@ fn main() -> anyhow::Result<()> {
 
                     te::KeyEvent { code: te::KeyCode::Enter, .. } => {
                         match repl.consume(&input[..]) {
-                            Err(e) => terror(14, 1, e.description())?,
+                            Err(e) => terror(14, 1, &e.to_string())?,
                             _ => { tclear(14, 1)? }
                         };
 
