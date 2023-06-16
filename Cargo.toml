@@ -2,6 +2,7 @@
 name = "ripple"
 version = "0.1.0"
 authors = ["Robbie Straw <drbawb@fatalsyntax.com>"]
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0.71"

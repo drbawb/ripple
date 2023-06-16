@@ -1,6 +1,3 @@
-extern crate anyhow;
-extern crate crossterm;
-
 mod platform;
 mod repl;
 
