@@ -1,5 +1,6 @@
+use crossterm::{cursor, queue, style, terminal};
 use std::error::Error;
-use platform::{Color, Terminal};
+use std::io::{stdout, Write};
 
 pub struct Repl {
     stack: Vec<f64>,
@@ -10,12 +11,15 @@ impl Repl {
         Repl { stack: vec![] }
     }
 
-    pub fn consume(&mut self, buf: &str) -> Result<(), Box<Error>> {
+    pub fn consume(&mut self, buf: &str) -> Result<(), anyhow::Error> {
         Ok(self.stack.push(try!(buf.parse())))
     }
 
-    pub fn draw(&self, term: &mut Terminal) {
-        term.color_cursor(Color::Black, Color::White);
+    pub fn draw(&self) {
+        let mut stdout = stdout().lock();
+        queue!(stdout, style::SetBackgroundColor(style::Color::Black));
+        queue!(stdout, style::SetForegroundColor(style::Color::White));
+        queue!(stdout, cursor::SavePosition);
 
         let mut stack = self.stack.iter().rev();
         for i in 0..10 {
@@ -24,21 +28,24 @@ impl Repl {
 
             let prompt = format!("{:02}: ", i+1);
             let prompt_width = prompt.len();
-            term.move_cursor((ofs + idx), 0);
-            term.clear_ln();
-            term.write_ln(&prompt[..]);
+            queue!(stdout, cursor::MoveTo(0, ofs + idx));
+            queue!(stdout, terminal::Clear(terminal::ClearType::CurrentLine));
+            queue!(stdout, style::Print(&prompt[..]));
 
             if let Some(reg) = stack.next() {
                 let output   = format!("{}", reg);
                 let alt_text = self.alt_repr(*reg);
 
-                term.move_cursor((ofs + idx), prompt_width);
-                term.write_ln(&output[..]);
+                queue!(stdout, cursor::MoveTo(prompt_width as u16, ofs + idx));
+                queue!(stdout, style::Print(&output[..]));
 
-                term.move_cursor((ofs + idx), prompt_width + 30);
-                term.write_ln(&alt_text[..]);
+                queue!(stdout, cursor::MoveTo(prompt_width as u16 + 30, ofs + idx));
+                queue!(stdout, style::Print(&alt_text[..]));
             }
         }
+
+        queue!(stdout, cursor::RestorePosition);
+        stdout.flush();
     }
 
     // offset x = 20, draw numbers in different modes, e.g binary, hex, etc.

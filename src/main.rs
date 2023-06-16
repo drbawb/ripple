@@ -1,103 +1,114 @@
-#[cfg(unix)] extern crate rustbox;
-#[cfg(windows)] extern crate wio;
-#[cfg(windows)] extern crate winapi;
+extern crate anyhow;
+extern crate crossterm;
 
 mod platform;
 mod repl;
 
 use std::error::Error;
+use std::io::{stdout, Write};
+use std::time::Duration;
 
-use platform::{Terminal, Event, Key};
+use crossterm::{cursor, event as te, terminal, ExecutableCommand};
 use platform::{terror, twrite, tinput, tclear};
 use repl::Repl;
 
-#[cfg(unix)] use platform::nix::UnixTerm;
-#[cfg(unix)] fn init_term() -> UnixTerm { UnixTerm::new() }
-
-#[cfg(windows)] use platform::win::WinConsole;
-#[cfg(windows)] fn init_term() -> WinConsole { WinConsole::new() }
-
-fn main() {
+fn main() -> anyhow::Result<()> {
     let mut repl  = Repl::new();
     let mut input = format!("");
-    let mut term  = init_term();
 
-    term.clear_fb();
-    twrite(&mut term, 0, 1, "welcome to ripple!");
-    twrite(&mut term, 1, 1, "q: quit, d: drop, n: negate");
-    term.render();
+
+    stdout()
+        .execute(terminal::EnterAlternateScreen)?
+        .execute(cursor::DisableBlinking)?
+        .execute(cursor::Hide)?
+        .flush()?;
+
+
+    twrite(0, 0, "welcome to ripple!")?;
+    twrite(1, 0, "q: quit, d: drop, n: negate")?;
 
     loop {
-        repl.draw(&mut term);
-        tinput(&mut term, 15, 1, &input[..]);
-        term.render();
+        tinput(15, 1, &input[..])?;
+        repl.draw();
+        // term.render();
+        //
+        //
+        //
+        if !te::poll(Duration::from_millis(100))? { continue }
 
-        match term.poll_event() {
+        match te::read()? {
             // input
-            Ok(Event::KeyPress(keycap)) => {
-                // clear the error buffer once we have more input
-                tclear(&mut term, 14, 1);
+            te::Event::Key(kc)=> {
+                match kc {
+                    te::KeyEvent { kind: te::KeyEventKind::Release, .. } => continue,
 
-                match keycap {
-                    Key::Char('q') => break,
+                    te::KeyEvent { code: te::KeyCode::Char('q'), .. } => break,
 
-                    Key::Char('d') => match repl.drop() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {},
+                    te::KeyEvent { code: te::KeyCode::Char('d'), .. } => match repl.drop() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? },
                     },
 
-                    Key::Char('n') => match repl.negate() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {},
+                    te::KeyEvent { code: te::KeyCode::Char('n'), .. } => match repl.negate() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? },
                     },
 
-                    Key::Char('+') => match repl.add() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {}
+                    te::KeyEvent { code: te::KeyCode::Char('+'), .. } => match repl.add() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? }
                     },
 
-                    Key::Char('-') =>match repl.sub() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {}
+                    te::KeyEvent { code: te::KeyCode::Char('-'), .. } => match repl.sub() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? }
                     },
 
-                    Key::Char('*') => match repl.mul() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {}
+                    te::KeyEvent { code: te::KeyCode::Char('*'), .. } =>  match repl.mul() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? }
                     },
 
-                    Key::Char('/') => match repl.div() {
-                        Err(msg) => terror(&mut term, 14, 1, msg),
-                        _ => {}
+                    te::KeyEvent { code: te::KeyCode::Char('/'), .. } =>  match repl.div() {
+                        Err(msg) => terror(14, 1, msg)?,
+                        _ => { tclear(14, 1)? }
                     },
 
-                    Key::Char(num) if is_numeric(num) => input.push(num), 
+                    te::KeyEvent { code: te::KeyCode::Char(num), .. } if is_numeric(num) => {
+                        tclear(14, 1)?;
+                        input.push(num);
+                    },
 
-                    Key::Enter => {
+                    te::KeyEvent { code: te::KeyCode::Enter, .. } => {
                         match repl.consume(&input[..]) {
-                            Err(e) => terror(&mut term, 14, 1, e.description()),
-                            _ => {}
+                            Err(e) => terror(14, 1, e.description())?,
+                            _ => { tclear(14, 1)? }
                         };
 
-                        tclear(&mut term, 15, 1);
+                        tclear(15, 1)?;
                         input.clear();
                     }
 
-                    Key::Backspace => {
-                        tclear(&mut term, 15, 1);
+                    te::KeyEvent { code: te::KeyCode::Backspace, .. } => {
+                        tclear(14, 1)?;
+                        tclear(15, 1)?;
                         if input.len() == 0 { continue } // nothing to truncate...
                         let new_len = input.len() - 1; input.truncate(new_len);
                     }
 
-                    _ => terror(&mut term, 14, 1, "unhandled keypress"),
+                    _ => terror(14, 1, "unhandled keypress")?,
                 }
-            }
 
-            // catch-all
-            //Ok(_)  => terror(&term, 14, 1, "unhandled event"),
-            Err(_message) => {},
+            }
+            _ => {},
         }
     }
+
+    stdout()
+        .execute(terminal::LeaveAlternateScreen)?
+        .flush()?;
+
+    Ok(()) // TODO: unreachable
 }
 
 // TODO: better input handling, more input modes
@@ -109,7 +120,7 @@ fn main() {
 //
 fn is_numeric(input: char) -> bool {
     match input {
-        '0'...'9' => true,
+        '0'..='9' => true,
         '.' => true,
         _ => false,
     }

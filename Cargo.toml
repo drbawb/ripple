@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Robbie Straw <drbawb@fatalsyntax.com>"]
 
 [dependencies]
+anyhow = "1.0.71"
+crossterm = "0.26.1"
 
 [target.'cfg(unix)'.dependencies]
 rustbox = "*"
